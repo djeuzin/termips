@@ -39,7 +39,7 @@ main:
 
 # ----------------------------- CARREGAR PALAVRAS -------------------------------
 	
-	# open file 13 (ponteiro, modo de abertura, permiss„o)
+	# open file 13 (ponteiro, modo de abertura, permiss√£o)
 	# 1005 palavras, leitura, (MARS ignora parece)
 	li $v0, 13
 	la $a0, lista_palavras
@@ -47,7 +47,7 @@ main:
 	li $a2, 0
 	syscall
 		
-	# read file 14 (chave, onde guardar, espaÁo a ser lido)
+	# read file 14 (chave, onde guardar, espa√ßo a ser lido)
 	# $v0 tem o acesso ao arquivo txt
 	move $s0, $v0
 	
@@ -64,18 +64,20 @@ main:
 
 # ----------------------------- PEGAR PALAVRA ALEATORIA -------------------------------
 			
-	# aqui eu tenho todas as palavras em buffer e em $t0 tenho a palavra aleatÛria
-	# como temos palavras de 5 letras e cada letra È 1 byte
-	# vamos pular de 7 em 7 bytes para pegar as palavras
-	# considerando que o arquivo "palavras.txt" termine em CRLF do Windows e n„o em LF (unix) 
+	# aqui eu tenho todas as palavras em buffer e em $t0 tenho a palavra aleat√≥ria
+	# como temos palavras de 5 letras e cada letra √© 1 byte
+	# vamos pular de 7 em 7 bytes para pegar as palavras (CRLF)
+
+	# se estiver em CRLF do Windows, mude o valor abaixo para 7 
+	# se estiver em LF (unix), mude o valor a baixo para 6 
 	
-	li $t1, 7
+	li $t1, 6
 	mul $t0, $t0, $t1
 	
 	# carrega a lista e acessa a palavra selecionada
 	la $s7, buffer
 	add $s7, $s7, $t0
-	# agora $s1 aponta para a primeira palavra
+	# agora $s7 aponta para a primeira palavra
 	
 	li $t0, 0 
 	
@@ -89,7 +91,7 @@ imprimir_letras:
 	li $v0, 11
 	syscall
 
-	# $s1 È o vetor de caracteres
+	# $s1 √© o vetor de caracteres
 	addi $s7, $s7, 1
     	addi $t0, $t0, 1
     	j imprimir_letras
