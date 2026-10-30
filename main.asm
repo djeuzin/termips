@@ -25,7 +25,7 @@ main:
 	# 11 - imprime caractere
 
 # ----------------------------- NUMERO ALEATORIO -------------------------------
-
+gera_numero:
 	# syscall 42 gera um numero aleatorio 0-1004
 	# a0 eh limite inferior
 	# a1 eh limite superior
@@ -37,16 +37,22 @@ main:
 	move $t0, $a0
 
 	# qual numero foi escolhido
+	beq $t7, 0, carrega_palavra
+	
+	la $a0, db_rng
+	li $v0, 4
+	syscall
+	
 	move $a0, $t0
 	li $v0, 1
 	syscall
 	
-	la $a0, paragrafo
+	la $a0, nova_linha
 	li $v0, 4
 	syscall
 
 # ----------------------------- CARREGAR PALAVRAS -------------------------------
-	
+carrega_palavra:
 	# open file 13 (ponteiro, modo de abertura, permissão)
 	# 1005 palavras, leitura, (MARS ignora parece)
 	li $v0, 13
@@ -90,9 +96,14 @@ main:
 	li $t0, 0 
 	
 # ----------------------------- IMPRESSAO -------------------------------
+	beq $t7, 0, game_loop
 	
+	la $a0, db_palavra
+    	li $v0, 4
+    	syscall
+
 imprimir_letras:
-    	beq $t0, 5, fim
+    	beq $t0, 5, game_loop
     
     	# 11 - imprime char
     	lb $a0, 0($s7)
@@ -104,6 +115,11 @@ imprimir_letras:
     	addi $t0, $t0, 1
     	j imprimir_letras
 
+# ----------------------------- LOOP PRINCIPAL -------------------------------
+game_loop:
+
+
+	j game_loop
 
 exit:	
 	li $v0, 10
