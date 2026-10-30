@@ -13,7 +13,7 @@ main:
 	# Flag para debug. 
 	# 0 - Falso. Modo normal
 	# 1 - Verdadeiro. Mostra opções.
-	li $t7, 0
+	li $s6, 1
 	
 	# 42 - gera numero aleatorio
 	# 13 - abre arquivo
@@ -37,7 +37,7 @@ gera_numero:
 	move $t0, $a0
 
 	# qual numero foi escolhido
-	beq $t7, 0, carrega_palavra
+	beq $s6, 0, carrega_palavra
 	
 	la $a0, db_rng
 	li $v0, 4
@@ -96,7 +96,7 @@ carrega_palavra:
 	li $t0, 0 
 	
 # ----------------------------- IMPRESSAO -------------------------------
-	beq $t7, 0, game_loop
+	beq $s6, 0, game_loop
 	
 	la $a0, db_palavra
     	li $v0, 4
@@ -110,15 +110,15 @@ imprimir_letras:
 	li $v0, 11
 	syscall
 
-	# $s1 é o vetor de caracteres
+	# $s7 é o vetor de caracteres
 	addi $s7, $s7, 1
     	addi $t0, $t0, 1
     	j imprimir_letras
 
 # ----------------------------- LOOP PRINCIPAL -------------------------------
 game_loop:
-
-
+	
+	j exit
 	j game_loop
 
 exit:	
