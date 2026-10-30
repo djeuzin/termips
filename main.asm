@@ -7,6 +7,12 @@ buffer:      		.space 7000
 .text 
 .globl main
 main:
+# ----------------------------- SETUP -------------------------------
+	# Flag para debug. 
+	# 0 - Falso. Modo normal
+	# 1 - Verdadeiro. Mostra opções.
+	li $t7, 0
+	
 	# 42 - gera numero aleatorio
 	# 13 - abre arquivo
 	# 14 - le arquivo
