@@ -3,6 +3,8 @@
 nova_linha: 		.asciiz "\n"
 lista_palavras: 	.asciiz "palavras.txt"
 buffer:      		.space 7000
+db_rng:			.asciiz "Numero aleatorio: "
+db_palavra:		.asciiz "Palavra escolhida: "
 
 .text 
 .globl main
