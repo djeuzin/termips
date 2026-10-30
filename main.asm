@@ -1,6 +1,6 @@
 .data
 
-paragrafo: 		.asciiz "\n"
+nova_linha: 		.asciiz "\n"
 lista_palavras: 	.asciiz "palavras.txt"
 buffer:      		.space 7000
 
@@ -97,6 +97,6 @@ imprimir_letras:
     	j imprimir_letras
 
 
-fim:	
+exit:	
 	li $v0, 10
 	syscall
