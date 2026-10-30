@@ -2,9 +2,11 @@
 
 nova_linha: 		.asciiz "\n"
 lista_palavras: 	.asciiz "palavras.txt"
-buffer:      		.space 7000
+buffer_banco:      	.space 7000
 db_rng:			.asciiz "Numero aleatorio: "
 db_palavra:		.asciiz "Palavra escolhida: "
+buffer_input:		.space 100
+msg_erro_input:		.asciiz "Entrada invalida. Tente novamente.\n"
 
 .text 
 .globl main
@@ -13,7 +15,7 @@ main:
 	# Flag para debug. 
 	# 0 - Falso. Modo normal
 	# 1 - Verdadeiro. Mostra opções.
-	li $s6, 1
+	li $s6, 0
 	
 	# 42 - gera numero aleatorio
 	# 13 - abre arquivo
@@ -53,7 +55,7 @@ gera_numero:
 
 # ----------------------------- CARREGAR PALAVRAS -------------------------------
 carrega_palavra:
-	# open file 13 (ponteiro, modo de abertura, permissão)
+	# open file 13 (ponteiro a0, modo de abertura a1, permissão, a2)
 	# 1005 palavras, leitura, (MARS ignora parece)
 	li $v0, 13
 	la $a0, lista_palavras
@@ -67,7 +69,7 @@ carrega_palavra:
 	
 	li $v0, 14
 	move $a0, $s0	
-	la $a1, buffer
+	la $a1, buffer_banco
 	li $a2, 7000
 	syscall
 	
@@ -89,7 +91,7 @@ carrega_palavra:
 	mul $t0, $t0, $t1
 	
 	# carrega a lista e acessa a palavra selecionada
-	la $s7, buffer
+	la $s7, buffer_banco
 	add $s7, $s7, $t0
 	# agora $s7 aponta para a primeira palavra
 	
@@ -116,7 +118,38 @@ imprimir_letras:
     	j imprimir_letras
 
 # ----------------------------- LOOP PRINCIPAL -------------------------------
+read_from_erro:
+	# print("Erro de input. Tente de novo")
+	li $v0, 4
+	la $a0, msg_erro_input
+	syscall
+
 game_loop:
+
+read_input:
+	# buffer_input = input()	
+	li $v0, 8
+	la $a0, buffer_input
+	syscall
+	
+	li $t1, 0
+	
+check_size:
+	# if (user_input[t1] == '\n') jump end_check_size
+	la $t2, buffer_input
+	add $t2, $t1, $t2
+	lb $t3, 0($t2)
+	beq $t3, 10, end_check_size
+	
+	addi $t1, $t1, 1
+	j check_size
+	
+end_check_size:
+	beq $t1, 5, continue_game
+	
+	j read_from_erro
+	
+continue_game:
 	
 	j exit
 	j game_loop
