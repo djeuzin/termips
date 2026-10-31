@@ -2,7 +2,8 @@
 
 nova_linha: 		.asciiz "\n"
 lista_palavras: 	.asciiz "palavras.txt"
-msg_erro_input:		.asciiz "Entrada invalida. Tente novamente.\n"
+msg_erro_input:		.asciiz "Entrada invalida. Apenas palavras com 5 letras.\n"
+msg_erro_caractere:	.asciiz "Entrada invalida. Não utilize caractere maiusculo ou especial.\n"
 msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
 db_rng:			.asciiz "Numero aleatorio: "
 db_palavra:		.asciiz "Palavra escolhida: "
@@ -77,7 +78,7 @@ debug1:
 	move $a0, $v0
 	la $a1, palavra_escolhida
 	jal PalavraParaRotulo
-	# string adicionada ao rótulo palavra_escolhida
+	# string adicionada ao rotulo palavra_escolhida
 	
 # ----------------------------- IMPRESSAO -------------------------------
 
@@ -103,6 +104,14 @@ game_loop:
 	# void LerEntrada();
 	jal LerEntrada
 	# le e valida se a entrada tem o tamanho correto
+	
+	
+	# ############################# VALIDAR PALAVRA ###############################	
+	
+	
+	
+	
+	
 	
 	addi $s5, $s5, 1
 	j game_loop
@@ -234,8 +243,17 @@ check_size_a:
 	
 	beq $t3, 10, end_check_size_a
 	
+	blt $t3, 97, caractere_diferente
+	bgt $t3, 122, caractere_diferente
+	
 	addi $t1, $t1, 1
 	j check_size_a
+
+caractere_diferente:
+	li $v0, 4
+	la $a0, msg_erro_caractere
+	syscall
+	j LerEntrada
 
 end_check_size_a:
 	beq $t1, 5, end_ler_entrada
