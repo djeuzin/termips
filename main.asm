@@ -72,11 +72,12 @@ debug1:
 	jal LocalizaPalavra
 	# $v0 aponta para o primeiro caractere da palavra na lista
 
+
 	# void PalavraParaRotulo();
 	move $a0, $v0
 	la $a1, palavra_escolhida
 	jal PalavraParaRotulo
-
+	# string adicionada ao rótulo palavra_escolhida
 	
 # ----------------------------- IMPRESSAO -------------------------------
 
@@ -101,6 +102,7 @@ game_loop:
 	
 	# void LerEntrada();
 	jal LerEntrada
+	# le e valida se a entrada tem o tamanho correto
 	
 	addi $s5, $s5, 1
 	j game_loop
