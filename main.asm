@@ -7,6 +7,7 @@ db_rng:			.asciiz "Numero aleatorio: "
 db_palavra:		.asciiz "Palavra escolhida: "
 buffer_input:		.space 100
 msg_erro_input:		.asciiz "Entrada invalida. Tente novamente.\n"
+msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
 
 .text 
 .globl main
@@ -16,6 +17,7 @@ main:
 	# 0 - Falso. Modo normal
 	# 1 - Verdadeiro. Mostra opções.
 	li $s6, 0
+	li $s5, 0 # Tentativas
 	
 	# 42 - gera numero aleatorio
 	# 13 - abre arquivo
@@ -125,7 +127,8 @@ read_from_erro:
 	syscall
 
 game_loop:
-
+	beq $s5, 6, game_over
+	
 read_input:
 	# buffer_input = input()	
 	li $v0, 8
@@ -151,8 +154,31 @@ end_check_size:
 	
 continue_game:
 	
-	j exit
+	addi $s5, $s5, 1
 	j game_loop
+
+game_over:
+	li $v0, 4
+	la $a0, msg_game_over
+	syscall
+
+	li $t4, 0
+	li $v0, 11
+	
+quick_print:
+	beq $t4, 5, exit_quick_print
+
+	lb $a0, 0($s7)
+	syscall
+	addi $s7, $s7, 1
+	addi $t4, $t4, 1
+	
+	j quick_print
+exit_quick_print:
+
+	li $v0, 4
+	la $a0, nova_linha
+	syscall
 
 exit:	
 	li $v0, 10
