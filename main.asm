@@ -9,6 +9,19 @@ buffer_input:		.space 100
 msg_erro_input:		.asciiz "Entrada invalida. Tente novamente.\n"
 msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
 
+
+# ------ Como declarar uma função ------
+# .globl <nome da funcao>
+# .ent <nome da funcao>
+# <nome da funcao>:
+# 	corpo da função
+#
+#	jr $ra
+# .end <nome da funcao>
+
+# ------ Como chamar uma função -------
+# jal <nome da funcao>
+
 .text 
 .globl main
 main:
@@ -120,39 +133,10 @@ imprimir_letras:
     	j imprimir_letras
 
 # ----------------------------- LOOP PRINCIPAL -------------------------------
-read_from_erro:
-	# print("Erro de input. Tente de novo")
-	li $v0, 4
-	la $a0, msg_erro_input
-	syscall
-
 game_loop:
 	beq $s5, 6, game_over
 	
-read_input:
-	# buffer_input = input()	
-	li $v0, 8
-	la $a0, buffer_input
-	syscall
-	
-	li $t1, 0
-	
-check_size:
-	# if (user_input[t1] == '\n') jump end_check_size
-	la $t2, buffer_input
-	add $t2, $t1, $t2
-	lb $t3, 0($t2)
-	beq $t3, 10, end_check_size
-	
-	addi $t1, $t1, 1
-	j check_size
-	
-end_check_size:
-	beq $t1, 5, continue_game
-	
-	j read_from_erro
-	
-continue_game:
+	jal LerEntrada
 	
 	addi $s5, $s5, 1
 	j game_loop
@@ -183,3 +167,39 @@ exit_quick_print:
 exit:	
 	li $v0, 10
 	syscall
+.end main
+
+.globl LerEntrada
+.ent LerEntrada
+
+read_from_erro_a:
+	# print("Erro de input. Tente de novo")
+	li $v0, 4
+	la $a0, msg_erro_input
+	syscall
+
+LerEntrada:
+	li $v0, 8
+	la $a0, buffer_input
+	syscall
+	
+	li $t1, 0
+
+check_size_a:
+	la $t2, buffer_input
+	add $t2, $t2, $t1
+	lb $t3, 0($t2)
+	
+	beq $t3, 10, end_check_size_a
+	
+	addi $t1, $t1, 1
+	j check_size_a
+
+end_check_size_a:
+	beq $t1, 5, end_ler_entrada
+	j read_from_erro_a
+	
+end_ler_entrada:
+	jr $ra	
+
+.end LerEntrada
