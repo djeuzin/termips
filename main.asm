@@ -1,18 +1,25 @@
 .data
 
-nova_linha: 		.asciiz "\n"
-lista_palavras: 	.asciiz "palavras.txt"
+# ----------------------------- ERROS -------------------------------
 msg_erro_input:		.asciiz "Entrada invalida. Apenas palavras com 5 letras.\n"
 msg_erro_caractere:	.asciiz "Entrada invalida. N�o utilize caractere maiusculo ou especial.\n"
 msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
-db_rng:			.asciiz "Numero aleatorio: "
-db_palavra:		.asciiz "Palavra escolhida: "
+
+# ----------------------------- UTILS -------------------------------
+nova_linha: 		.asciiz "\n"
+lista_palavras: 	.asciiz "palavras.txt"
 buffer_banco:      	.space 7000
 buffer_input:		.space 100
 palavra_escolhida:	.space 6
+palavra_tentativa:	.space 6
 
+# ----------------------------- DEBUG -------------------------------
+db_rng:			.asciiz "Numero aleatorio: "
+db_palavra:		.asciiz "Palavra escolhida: "
 
-# ------ Como declarar uma função ------
+# ----------------------------- INSTRUCOES -------------------------------
+
+# ------ Como declarar uma funcao ------
 # .globl <nome da funcao>
 # .ent <nome da funcao>
 # <nome da funcao>:
@@ -24,9 +31,12 @@ palavra_escolhida:	.space 6
 # ------ Como chamar uma funcao -------
 # jal <nome da funcao>
 
+
+
 .text 
 .globl main
 main:
+
 # ----------------------------- SETUP -------------------------------
 	# Flag para debug. 
 	# 0 - Falso. Modo normal
@@ -42,7 +52,7 @@ gera_numero:
 	# a1 eh limite superior
 	li $v0, 42
 	li $a0, 0
-	li $a1, 1004 #1004
+	li $a1, 995 #995
 	syscall
 	
 	move $t0, $a0
@@ -101,18 +111,40 @@ debug2:
 game_loop:
 	beq $s5, 6, game_over
 	
-	# void LerEntrada();
+	# $v0 LerEntrada();
 	jal LerEntrada
 	# le e valida se a entrada tem o tamanho correto
 	
-	
-	# ############################# VALIDAR PALAVRA ###############################	
-	
-	
-	
-	
+	# $a0 ja tem a tentativa
+	la $a0, buffer_input
+	la $a1, palavra_tentativa
+	jal PalavraParaRotulo
 	
 	
+	
+	# DEBUG - qual palavra esta no input
+	beq $s6, 0, debug3
+	la $a0, palavra_tentativa
+	jal ImprimirPalavra
+
+	li $v0, 4
+	la $a0, nova_linha
+	syscall
+	# DEBUG - fim
+debug3:
+
+	# ############################# ANALISAR PALAVRA ###############################	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	# ############################# FIM ANALISAR PALAVRA ###############################
 	addi $s5, $s5, 1
 	j game_loop
 
@@ -223,7 +255,7 @@ end_func:
 .globl LerEntrada
 .ent LerEntrada
 
-read_from_erro_a:
+erro_tamanho:
 	# print("Erro de input. Tente de novo")
 	li $v0, 4
 	la $a0, msg_erro_input
@@ -257,10 +289,11 @@ caractere_diferente:
 
 end_check_size_a:
 	beq $t1, 5, end_ler_entrada
-	j read_from_erro_a
+	j erro_tamanho
 	
 end_ler_entrada:
-	jr $ra	
+	la $v0, buffer_input
+	jr $ra
 
 .end LerEntrada
 
@@ -286,7 +319,7 @@ loop_conversion:
 	
 fim_conversion:
 	# $t0 ta na 5 letra, entao pula pra proxima
-	sb $zero, 1($t0)
+	sb $zero, 1($t1)
 	jr $ra
 	
 .end PalavraParaRotulo
