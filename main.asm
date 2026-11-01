@@ -7,6 +7,7 @@ msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
 
 # ----------------------------- UTILS -------------------------------
 nova_linha: 		.asciiz "\n"
+novo_tab: 		.asciiz " "
 lista_palavras: 	.asciiz "palavras.txt"
 buffer_banco:      	.space 7000
 buffer_input:		.space 100
@@ -16,6 +17,7 @@ palavra_tentativa:	.space 6
 # ----------------------------- DEBUG -------------------------------
 db_rng:			.asciiz "Numero aleatorio: "
 db_palavra:		.asciiz "Palavra escolhida: "
+db_tentativa:		.asciiz "Tentativa: "
 
 # ----------------------------- INSTRUCOES -------------------------------
 
@@ -124,6 +126,19 @@ game_loop:
 	
 	# DEBUG - qual palavra esta no input
 	beq $s6, 0, debug3
+	
+	move $a0, $s5
+	li $v0, 1
+	syscall
+	
+	li $v0, 4
+	la $a0, novo_tab
+	syscall
+	
+	la $a0, db_tentativa
+    	li $v0, 4
+    	syscall
+	
 	la $a0, palavra_tentativa
 	jal ImprimirPalavra
 
