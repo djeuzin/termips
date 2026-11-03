@@ -2,7 +2,7 @@
 
 # ----------------------------- ERROS -------------------------------
 msg_erro_input:		.asciiz "Entrada invalida. Apenas palavras com 5 letras.\n"
-msg_erro_caractere:	.asciiz "Entrada invalida. N�o utilize caractere maiusculo ou especial.\n"
+msg_erro_caractere:	.asciiz "Entrada invalida. N�o utilize caractere maiusculo ou especial.\n"
 msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
 
 # ----------------------------- UTILS -------------------------------
@@ -18,6 +18,41 @@ palavra_tentativa:	.space 6
 db_rng:			.asciiz "Numero aleatorio: "
 db_palavra:		.asciiz "Palavra escolhida: "
 db_tentativa:		.asciiz "Tentativa: "
+
+# ----------------------------- GRAPHICS ----------------------------
+.align 2
+
+base_addr: .word 0x10040000
+color_red: .word 0x00ff0000
+color_green: .word 0x0000ff00
+color_white: .word 0x00ffffff
+
+letra_A: .byte 0x18, 0x3C, 0x66, 0x66, 0x7E, 0x7E, 0x66, 0x66
+letra_B: .byte 0x1e, 0x3e, 0x66, 0x3e, 0x3e, 0x66, 0x3e, 0x1e
+letra_C: .byte 0x3c, 0x7e, 0x66, 0x06, 0x06, 0x66, 0x7e, 0x3c
+letra_D: .byte 0x1e, 0x3e, 0x66, 0x66, 0x66, 0x66, 0x3e, 0x1e
+letra_E: .byte 0x7e, 0x7e, 0x06, 0x7e, 0x7e, 0x06, 0x7e, 0x7e
+letra_F: .byte 0x7E, 0x7E, 0x06, 0x7E, 0x7E, 0x06, 0x06, 0x06
+letra_G: .byte 0x3C, 0x7E, 0x66, 0x06, 0x76, 0x66, 0x7E, 0x3C
+letra_H: .byte 0x66, 0x66, 0x66, 0x7E, 0x7E, 0x66, 0x66, 0x66
+letra_I: .byte 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18
+letra_J: .byte 0x60, 0x60, 0x60, 0x60, 0x66, 0x66, 0x7E, 0x3C
+letra_K: .byte 0x66, 0x76, 0x3E, 0x1E, 0x36, 0x76, 0x66, 0x66
+letra_L: .byte 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x7E, 0x7E
+letra_M: .byte 0x42, 0x66, 0x7E, 0x7E, 0x66, 0x66, 0x66, 0x66
+letra_N: .byte 0x66, 0x6E, 0x6E, 0x7E, 0x7E, 0x76, 0x76, 0x66
+letra_O: .byte 0x18, 0x3C, 0x66, 0x66, 0x66, 0x66, 0x3C, 0x18
+letra_P: .byte 0x3E, 0x7E, 0x66, 0x7E, 0x3E, 0x06, 0x06, 0x06
+letra_Q: .byte 0x18, 0x3C, 0x66, 0x66, 0x66, 0x76, 0x3C, 0x58
+letra_R: .byte 0x3E, 0x7E, 0x66, 0x7E, 0x3E, 0x36, 0x76, 0x66
+letra_S: .byte 0x3C, 0x7E, 0x06, 0x3E, 0x7C, 0x60, 0x7E, 0x3C
+letra_T: .byte 0x7E, 0x7E, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18
+letra_U: .byte 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x7E, 0x3C
+letra_V: .byte 0x66, 0x66, 0x66, 0x66, 0x66, 0x7E, 0x3C, 0x18
+letra_W: .byte 0x66, 0x7E, 0x7E, 0x66, 0x66, 0x66, 0x66, 0x42
+letra_X: .byte 0x66, 0x66, 0x66, 0x3C, 0x3C, 0x66, 0x66, 0x66
+letra_Y: .byte 0x66, 0x66, 0x7E, 0x3C, 0x18, 0x18, 0x18, 0x18
+letra_Z: .byte 0x7E, 0x7E, 0x30, 0x38, 0x1C, 0x0C, 0x7E, 0x7E
 
 # ----------------------------- INSTRUCOES -------------------------------
 
@@ -90,7 +125,7 @@ debug1:
 	move $a0, $v0
 	la $a1, palavra_escolhida
 	jal PalavraParaRotulo
-	# string adicionada ao rotulo palavra_escolhida
+	# string adicionada O documento está bem estruturado. Continue destacando como sua criatividade resolve limitações físicas e dao rotulo palavra_escolhida
 	
 # ----------------------------- IMPRESSAO -------------------------------
 
@@ -109,6 +144,20 @@ debug1:
 	syscall
 	# DEBUG - fim
 debug2:
+
+# ----------------------------- DESENHAR LINHA -------------------------------
+
+	lw $s0, base_addr
+	lw $s1, color_white
+	li $t4, 0
+	li $t5, 8192
+
+line_loop1:
+	sw $s1, 0($s0)
+	addi $s0, $s0, 4
+	addi $t4, $t4, 1
+	blt $t4, $t5, line_loop1
+
 # ----------------------------- LOOP PRINCIPAL -------------------------------
 game_loop:
 	beq $s5, 6, game_over
@@ -122,7 +171,9 @@ game_loop:
 	la $a1, palavra_tentativa
 	jal PalavraParaRotulo
 	
-	
+	la $a0 palavra_escolhida
+	la $a1, palavra_tentativa
+	jal MostrarDisplay
 	
 	# DEBUG - qual palavra esta no input
 	beq $s6, 0, debug3
@@ -164,6 +215,19 @@ debug3:
 	j game_loop
 
 game_over:
+
+# ----------------------------- DESENHAR LINHA -------------------------------
+
+	lw $s1, color_white
+	li $t4, 0
+	li $t5, 8192
+
+line_loop2:
+	sw $s1, 0($s0)
+	addi $s0, $s0, 4
+	addi $t4, $t4, 1
+	blt $t4, $t5, line_loop2
+
 	li $v0, 4
 	la $a0, msg_game_over
 	syscall
@@ -338,3 +402,124 @@ fim_conversion:
 	jr $ra
 	
 .end PalavraParaRotulo
+
+.globl MostrarDisplay
+.ent MostrarDisplay
+MostrarDisplay:
+	lw $s1, color_white
+#1. desenhar 8 linhas
+	li $t0, 4096
+while1:
+	sw $s1, 0($s0)
+	addi $s0, $s0, 4
+	addi $t0, $t0, -1
+	bgt $t0, $zero, while1
+#1. fim desenhar 8 linhas
+#while3
+	li $t5, 5
+while3:
+
+#2. desenhar uma coluna 64 por 32
+	li $t0, 63
+while2:
+	li $t1, 31
+while2_1:
+	move $t2, $t0
+	sll $t2, $t2, 9
+	add $t2, $t2, $t1
+	sll $t2, $t2, 2
+	add $t2, $t2, $s0
+	sw $s1, 0($t2)
+	addi $t1, $t1, -1
+	bge $t1, $zero, while2_1
+#fim while 2 1
+	addi $t0, $t0, -1
+	bge $t0, $zero, while2
+#fim while 2
+#2. fim desenhar coluna 64 por 32
+	addi $s0, $s0, 128
+
+	lb $t0, 0($a0)
+	lb $t1, 0($a1)
+	la $s3, letra_A
+	move $t2, $t1
+	addi $t2, $t2, -97
+	sll $t2, $t2, 3
+	add $s3, $s3, $t2
+	bne $t0, $t1, else1
+	lw $s2, color_green
+	j fim_if1
+else1:
+	lw $s2, color_red
+fim_if1:
+	addi $a0, $a0, 1
+	addi $a1, $a1, 1
+	li $t1, 8
+while3_1:
+	lb $t2, 0($s3)
+	li $t3, 1
+	li $t0, 8
+while3_1_1:
+	and $t4, $t2, $t3
+	bne $t4, $zero, else2
+	move $t7, $s2
+	j fim_if2
+else2:
+	move $t7, $s1
+fim_if2:
+	li $t6, 7
+while3_1_1_1:
+	sw $t7, 0($s0)
+	sw $t7, 4($s0)
+	sw $t7, 8($s0)
+	sw $t7, 12($s0)
+	sw $t7, 16($s0)
+	sw $t7, 20($s0)
+	sw $t7, 24($s0)
+	sw $t7, 28($s0)
+	addi $s0, $s0, 2048
+	addi $t6, $t6, -1
+	bge $t6, $zero, while3_1_1_1
+	addi $s0, $s0, -16352
+	sll $t3, $t3, 1
+	addi $t0, $t0, -1
+	bgt $t0, $zero, while3_1_1
+	addi $s0, $s0, 16128
+	addi $s3, $s3, 1
+	addi $t1, $t1, -1
+	bgt $t1, $zero, while3_1
+	addi $s0, $s0, -130816
+	addi $t5, $t5, -1
+	bgt $t5, $zero, while3
+
+#2. desenhar ultima coluna 64 por 32
+	li $t0, 63
+while4:
+	li $t1, 31
+while4_1:
+	move $t2, $t0
+	sll $t2, $t2, 9
+	add $t2, $t2, $t1
+	sll $t2, $t2, 2
+	add $t2, $t2, $s0
+	sw $s1, 0($t2)
+	addi $t1, $t1, -1
+	bge $t1, $zero, while4_1
+#fim while 4 1
+	addi $t0, $t0, -1
+	bge $t0, $zero, while4
+#fim while 4
+#2. fim desenhar ultima coluna 64 por 32
+	addi $s0, $s0, 129152
+
+#1. desenhar 8 linhas
+	li $t0, 4096
+while5:
+	sw $s1, 0($s0)
+	addi $s0, $s0, 4
+	addi $t0, $t0, -1
+	bgt $t0, $zero, while5
+#1. fim desenhar 8 linhas
+
+	jr $ra
+.end MostrarDisplay
