@@ -2,7 +2,7 @@
 
 # ----------------------------- ERROS -------------------------------
 msg_erro_input:		.asciiz "Entrada invalida. Apenas palavras com 5 letras.\n"
-msg_erro_caractere:	.asciiz "Entrada invalida. N�o utilize caractere maiusculo ou especial.\n"
+msg_erro_caractere:	.asciiz "Entrada invalida. Não utilize caractere maiusculo ou especial.\n"
 msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
 
 # ----------------------------- UTILS -------------------------------
@@ -147,17 +147,23 @@ game_loop:
 	syscall
 	# DEBUG - fim
 debug3:
+	
+		# ############################# ANALISAR PALAVRA ###############################
+	la $a0, palavra_escolhida
+	la $a1, palavra_tentativa
+	jal CompararPalavras
+	move $s4, $v0			# s4 = numero de acertos exatos
 
-	# ############################# ANALISAR PALAVRA ###############################	
+	li $v0, 4
+	la $a0, resultado_cmp
+	syscall
+	li $v0, 4
+	la $a0, nova_linha
+	syscall
+
+	beq $s4, 5, vitoria
 	
-	
-	
-	
-	
-	
-	
-	
-	
+
 	
 	# ############################# FIM ANALISAR PALAVRA ###############################
 	addi $s5, $s5, 1
@@ -198,7 +204,7 @@ exit:
 LocalizaPalavra:
 	move $t0, $a0
 	
-	# open file 13 (ponteiro a0, modo de abertura a1, permissão, a2)
+	# open file 13 (ponteiro a0, modo de abertura a1, permissÃ£o, a2)
 	# 995 palavras, leitura, (MARS ignora parece)
 	li $v0, 13
 	la $a0, lista_palavras
@@ -222,7 +228,7 @@ LocalizaPalavra:
 	syscall
 	
 				
-	# aqui eu tenho todas as palavras em buffer e em $t0 tenho a palavra aleatória
+	# aqui eu tenho todas as palavras em buffer e em $t0 tenho a palavra aleatÃ³ria
 	# como temos palavras de 5 letras e cada letra eh 1 byte
 	# vamos pular de 7 em 7 bytes para pegar as palavras (CRLF)
 
