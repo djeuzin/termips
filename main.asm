@@ -14,6 +14,9 @@ buffer_input:		.space 100
 palavra_escolhida:	.space 6
 palavra_tentativa:	.space 6
 
+copia_palavra:		.space 6
+cores:			.space 6
+
 # ----------------------------- DEBUG -------------------------------
 db_rng:			.asciiz "Numero aleatorio: "
 db_palavra:		.asciiz "Palavra escolhida: "
@@ -61,7 +64,7 @@ gera_numero:
 
 
 
-	# DEBUG - qual numero foi escolhido
+# DEBUG - qual numero foi escolhido
 	beq $s6, 0, debug1
 	
 	la $a0, db_rng
@@ -75,9 +78,9 @@ gera_numero:
 	la $a0, nova_linha
 	li $v0, 4
 	syscall
-	# DEBUG - fim
-	
+# DEBUG - fim	
 debug1:
+
 # ----------------------------- PEGA PALAVRA SORTEADA -------------------------------
 
 	# $v0 LocalizaPalavra($a0 numero_aleatorio)
@@ -94,7 +97,7 @@ debug1:
 	
 # ----------------------------- IMPRESSAO -------------------------------
 
-	# DEBUG - qual palavra foi escolhida
+# DEBUG - qual palavra foi escolhida
 	beq $s6, 0, debug2
 	la $a0, db_palavra
     	li $v0, 4
@@ -107,8 +110,9 @@ debug1:
 	li $v0, 4
 	la $a0, nova_linha
 	syscall
-	# DEBUG - fim
+# DEBUG - fim
 debug2:
+
 # ----------------------------- LOOP PRINCIPAL -------------------------------
 game_loop:
 	beq $s5, 6, game_over
@@ -124,7 +128,7 @@ game_loop:
 	
 	
 	
-	# DEBUG - qual palavra esta no input
+# DEBUG - qual palavra esta no input
 	beq $s6, 0, debug3
 	
 	move $a0, $s5
@@ -150,16 +154,65 @@ debug3:
 
 	# ############################# ANALISAR PALAVRA ###############################	
 	
+	# cohpia da tentativa
+	la $a0, palavra_escolhida
+	la $a1, copia_palavra
+	jal PalavraParaRotulo
 	
+	la $a0, palavra_tentativa
+	la $a1, copia_palavra
+	jal ComparaCertas
+
+# DEBUG - qual cores e copia pós CERTAS
+	beq $s6, 0, debug4
+	# linha das cores
+	la $a0, 0($v0)
+	jal ImprimirPalavra
 	
+	li $v0, 4
+	la $a0, novo_tab
+	syscall
 	
+	# copia da tentativa
+	la $t0, copia_palavra
+	la $a0, 0($t0)
+	jal ImprimirPalavra	
 	
+	li $v0, 4
+	la $a0, nova_linha
+	syscall
+# DEBUG - fim
+debug4:
+
+	# aqui eu tenho a string com as certas
+	la $a0, palavra_tentativa
+	la $a1, copia_palavra
+	la $a2, cores
+	jal ComparaResto
+
+# DEBUG - qual cores e copia pós resto
+	beq $s6, 0, debug5
+	# linha das cores
+	la $a0, 0($v0)
+	jal ImprimirPalavra
 	
+	li $v0, 4
+	la $a0, novo_tab
+	syscall
 	
+	# copia da tentativa
+	la $t0, copia_palavra
+	la $a0, 0($t0)
+	jal ImprimirPalavra	
 	
-	
+	li $v0, 4
+	la $a0, nova_linha
+	syscall
+# DEBUG - fim
+debug5:	
 	
 	# ############################# FIM ANALISAR PALAVRA ###############################
+	
 	addi $s5, $s5, 1
 	j game_loop
 
@@ -338,3 +391,108 @@ fim_conversion:
 	jr $ra
 	
 .end PalavraParaRotulo
+
+# ----------------------------- PROCEDIMENTO compare the correct characters -------------------------------
+
+.globl ComparaCertas
+.ent ComparaCertas
+ComparaCertas:
+	move $t0, $a0
+	move $t1, $a1
+	la $t2, cores
+	
+loop_comparacao1:
+	lb $t3, 0($t0)
+	lb $t4, 0($t1)
+	
+	beq $t3, $zero, fim_comparacao
+	
+	beq $t3, $t4, iguais
+	# se estiver errado, poe _
+	li $t5, 95
+	sb $t5, 0($t2)
+	
+continua:
+	
+	addi $t0, $t0, 1
+	addi $t1, $t1, 1
+	addi $t2, $t2, 1
+	j loop_comparacao1
+	
+iguais:
+	# C em cores
+	li $t5, 67
+	sb $t5, 0($t2)
+	
+	# poe * na tentativa
+	li $t5, 42
+	sb $t5, 0($t1)
+	
+	j continua
+	
+fim_comparacao:
+	sb $zero, 0($t2)
+	la $v0, cores
+	jr $ra
+.end ComparaCertas
+
+# ----------------------------- PROCEDIMENTO compare the rest of the attempt -------------------------------
+.globl ComparaResto
+.ent ComparaResto
+ComparaResto:
+	move $t0, $a0 #tentativa
+	move $t1, $a1 #copia
+	move $t2, $a2 #cores
+	li $t3, 0
+	
+loop_ext:
+	beq $t3, 5, fim_resto
+	
+	lb $t4, ($t2)
+	beq $t4, 67, skip_int
+	
+	# não é 'C'
+	# pego a letra em palavra_tentativa e um aux para o começo da palavra
+	lb $t5, ($t0)
+	move $t6, $a1
+	li $t7, 0
+	
+	
+loop_int:
+	beq $t7, 5, nao_encontrou
+	
+	# t8 é a letra da iteracao
+	lb $t8, ($t6)
+	beq $t5, $t8, encontrou
+	
+	addi $t6, $t6, 1
+	addi $t7, $t7, 1
+	
+	j loop_int
+	
+encontrou:
+	# poe o 'Q'
+	li $t9, 81
+	sb $t9, ($t2)
+	
+	# poe '*' na copia
+	li $t9, 42
+	sb $t9, ($t6)
+	j skip_int
+	
+nao_encontrou:
+	# poe 'E' na letra errada
+	li $t9, 69
+	sb $t9, ($t2)
+	
+	
+skip_int:
+	addi $t0, $t0, 1
+	addi $t2, $t2, 1
+	addi $t3, $t3, 1
+	j loop_ext
+	
+fim_resto:
+	move $v0, $a2
+	jr $ra
+.end
