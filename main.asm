@@ -2,7 +2,7 @@
 
 # ----------------------------- ERROS -------------------------------
 msg_erro_input:		.asciiz "Entrada invalida. Apenas palavras com 5 letras.\n"
-msg_erro_caractere:	.asciiz "Entrada invalida. Não utilize caractere maiusculo ou especial.\n"
+msg_erro_caractere:	.asciiz "Entrada invalida. N?o utilize caractere maiusculo ou especial.\n"
 msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
 
 # ----------------------------- UTILS -------------------------------
@@ -13,11 +13,16 @@ buffer_banco:      	.space 7000
 buffer_input:		.space 100
 palavra_escolhida:	.space 6
 palavra_tentativa:	.space 6
+resultado_cmp:	.space 6
+usado_cmp:	.space 5
+msg_vitoria:	.asciiz "Parabens! Voce acertou!\n"
 
 # ----------------------------- DEBUG -------------------------------
 db_rng:			.asciiz "Numero aleatorio: "
 db_palavra:		.asciiz "Palavra escolhida: "
 db_tentativa:		.asciiz "Tentativa: "
+
+
 
 # ----------------------------- INSTRUCOES -------------------------------
 
@@ -147,9 +152,8 @@ game_loop:
 	syscall
 	# DEBUG - fim
 debug3:
-	
-		# ############################# ANALISAR PALAVRA ###############################
-	la $a0, palavra_escolhida
+
+	# ############################# ANALISAR PALAVRA ###############################	
 	la $a1, palavra_tentativa
 	jal CompararPalavras
 	move $s4, $v0			# s4 = numero de acertos exatos
@@ -162,17 +166,23 @@ debug3:
 	syscall
 
 	beq $s4, 5, vitoria
-	
-
-	
 	# ############################# FIM ANALISAR PALAVRA ###############################
+	
 	addi $s5, $s5, 1
 	j game_loop
+
+vitoria:
+	li $v0, 4
+	la $a0, msg_vitoria
+	syscall
+	j exit
 
 game_over:
 	li $v0, 4
 	la $a0, msg_game_over
 	syscall
+
+
 
 	# void ImprimirPalavra(a0 palavra);
 	la $a0, palavra_escolhida
@@ -204,7 +214,7 @@ exit:
 LocalizaPalavra:
 	move $t0, $a0
 	
-	# open file 13 (ponteiro a0, modo de abertura a1, permissÃ£o, a2)
+	# open file 13 (ponteiro a0, modo de abertura a1, permiss�o, a2)
 	# 995 palavras, leitura, (MARS ignora parece)
 	li $v0, 13
 	la $a0, lista_palavras
@@ -228,7 +238,7 @@ LocalizaPalavra:
 	syscall
 	
 				
-	# aqui eu tenho todas as palavras em buffer e em $t0 tenho a palavra aleatÃ³ria
+	# aqui eu tenho todas as palavras em buffer e em $t0 tenho a palavra aleat�ria
 	# como temos palavras de 5 letras e cada letra eh 1 byte
 	# vamos pular de 7 em 7 bytes para pegar as palavras (CRLF)
 
@@ -344,3 +354,80 @@ fim_conversion:
 	jr $ra
 	
 .end PalavraParaRotulo
+
+
+
+
+	# ----------------------------- PROCEDIMENTO compara palavras -------------------------------
+# $v0 CompararPalavras($a0 palavra_escolhida, $a1 palavra_tentativa)
+# Preenche resultado_cmp com '*', '+' ou '-'. Retorna em $v0 o numero de acertos exatos.
+.globl CompararPalavras
+.ent CompararPalavras
+CompararPalavras:
+	la $t8, resultado_cmp
+	la $t9, usado_cmp
+	li $t0, 0			# i
+	li $v0, 0			# acertos
+
+# ---- passada 1: posicoes exatas ----
+pass1:
+	beq $t0, 5, pass1_fim
+	add $t1, $a0, $t0
+	lb $t1, 0($t1)			# escolhida[i]
+	add $t2, $a1, $t0
+	lb $t2, 0($t2)			# tentativa[i]
+	add $t3, $t8, $t0		# &resultado[i]
+	add $t4, $t9, $t0		# &usado[i]
+	bne $t1, $t2, p1_errou
+	li $t5, '*'
+	sb $t5, 0($t3)
+	li $t5, 1
+	sb $t5, 0($t4)			# marca a letra da secreta como usada
+	addi $v0, $v0, 1
+	j p1_prox
+p1_errou:
+	li $t5, '-'
+	sb $t5, 0($t3)
+	sb $zero, 0($t4)
+p1_prox:
+	addi $t0, $t0, 1
+	j pass1
+
+pass1_fim:
+	sb $zero, 5($t8)		# terminador da string
+	li $t0, 0			# i
+
+# ---- passada 2: letras existentes em outra posicao ----
+pass2:
+	beq $t0, 5, pass2_fim
+	add $t3, $t8, $t0
+	lb $t5, 0($t3)
+	li $t6, '*'
+	beq $t5, $t6, p2_prox		# ja eh acerto exato
+	add $t2, $a1, $t0
+	lb $t2, 0($t2)			# tentativa[i]
+	li $t1, 0			# j
+p2_inner:
+	beq $t1, 5, p2_prox
+	add $t4, $t9, $t1
+	lb $t5, 0($t4)
+	bnez $t5, p2_next_j		# letra j da secreta ja usada
+	add $t6, $a0, $t1
+	lb $t6, 0($t6)
+	bne $t6, $t2, p2_next_j
+	li $t5, '+'
+	sb $t5, 0($t3)
+	li $t5, 1
+	sb $t5, 0($t4)
+	j p2_prox
+p2_next_j:
+	addi $t1, $t1, 1
+	j p2_inner
+p2_prox:
+	addi $t0, $t0, 1
+	j pass2
+
+pass2_fim:
+	jr $ra
+.end CompararPalavras
+	
