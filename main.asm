@@ -4,6 +4,7 @@
 msg_erro_input:		.asciiz "Entrada invalida. Apenas palavras com 5 letras.\n"
 msg_erro_caractere:	.asciiz "Entrada invalida. N?o utilize caractere maiusculo ou especial.\n"
 msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
+msg_erro_arquivo:  	.asciiz "Erro: Nao foi possivel abrir palavras.txt\n"
 
 # ----------------------------- UTILS -------------------------------
 nova_linha: 		.asciiz "\n"
@@ -153,7 +154,8 @@ game_loop:
 	# DEBUG - fim
 debug3:
 
-	# ############################# ANALISAR PALAVRA ###############################	
+	# ############################# ANALISAR PALAVRA ###############################
+	la $a0, palavra_escolhida	
 	la $a1, palavra_tentativa
 	jal CompararPalavras
 	move $s4, $v0			# s4 = numero de acertos exatos
@@ -224,6 +226,8 @@ LocalizaPalavra:
 	
 	# read file 14 (chave, onde guardar, espaco a ser lido)
 	# $v0 tem o acesso ao arquivo txt
+	bltz $v0,erro_abertura_ficheiro
+	
 	move $t2, $v0
 	
 	li $v0, 14
@@ -253,6 +257,13 @@ LocalizaPalavra:
 	la $v0, buffer_banco
 	add $v0, $v0, $t0
 	jr $ra
+	
+erro_abertura_ficheiro:
+	li $v0, 4
+	la $a0, msg_erro_arquivo
+	syscall
+	li $v0, 10
+	syscall
 
 .end LocalizaPalavra
 
