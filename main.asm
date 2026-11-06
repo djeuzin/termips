@@ -2,7 +2,7 @@
 
 # ----------------------------- ERROS -------------------------------
 msg_erro_input:		.asciiz "Entrada invalida. Apenas palavras com 5 letras.\n"
-msg_erro_caractere:	.asciiz "Entrada invalida. N�o utilize caractere maiusculo ou especial.\n"
+msg_erro_caractere:	.asciiz "Entrada invalida. Nao utilize caractere maiusculo ou especial.\n"
 msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
 msg_vitoria: 		.asciiz "\nParabens! Voce acertou a palavra!\n"
 
@@ -23,6 +23,45 @@ db_rng:			.asciiz "Numero aleatorio: "
 db_palavra:		.asciiz "Palavra escolhida: "
 db_tentativa:		.asciiz "Tentativa: "
 
+
+# ----------------------------- BITMAP -------------------------------
+
+base_addr: .word 0x10040000
+color_red: .word 0x00ff0000
+color_green: .word 0x0000bb00
+color_yellow: .word 0x00ffff00
+color_gray: .word 0x00cccccc
+
+
+letra_A: .byte 0x18, 0x3C, 0x66, 0x66, 0x7E, 0x7E, 0x66, 0x66
+letra_B: .byte 0x1e, 0x3e, 0x66, 0x3e, 0x3e, 0x66, 0x3e, 0x1e
+letra_C: .byte 0x3c, 0x7e, 0x66, 0x06, 0x06, 0x66, 0x7e, 0x3c
+letra_D: .byte 0x1e, 0x3e, 0x66, 0x66, 0x66, 0x66, 0x3e, 0x1e
+letra_E: .byte 0x7e, 0x7e, 0x06, 0x7e, 0x7e, 0x06, 0x7e, 0x7e
+letra_F: .byte 0x7E, 0x7E, 0x06, 0x7E, 0x7E, 0x06, 0x06, 0x06
+letra_G: .byte 0x3C, 0x7E, 0x66, 0x06, 0x76, 0x66, 0x7E, 0x3C
+letra_H: .byte 0x66, 0x66, 0x66, 0x7E, 0x7E, 0x66, 0x66, 0x66
+letra_I: .byte 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18
+letra_J: .byte 0x60, 0x60, 0x60, 0x60, 0x66, 0x66, 0x7E, 0x3C
+letra_K: .byte 0x66, 0x76, 0x3E, 0x1E, 0x36, 0x76, 0x66, 0x66 
+letra_L: .byte 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x7E, 0x7E
+letra_M: .byte 0x42, 0x66, 0x7E, 0x7E, 0x66, 0x66, 0x66, 0x66
+letra_N: .byte 0x66, 0x6E, 0x6E, 0x7E, 0x7E, 0x76, 0x76, 0x66
+letra_O: .byte 0x18, 0x3C, 0x66, 0x66, 0x66, 0x66, 0x3C, 0x18
+letra_P: .byte 0x3E, 0x7E, 0x66, 0x7E, 0x3E, 0x06, 0x06, 0x06
+letra_Q: .byte 0x18, 0x3C, 0x66, 0x66, 0x66, 0x76, 0x3C, 0x58
+letra_R: .byte 0x3E, 0x7E, 0x66, 0x7E, 0x3E, 0x36, 0x76, 0x66
+letra_S: .byte 0x3C, 0x7E, 0x06, 0x3E, 0x7C, 0x60, 0x7E, 0x3C
+letra_T: .byte 0x7E, 0x7E, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18
+letra_U: .byte 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x7E, 0x3C
+letra_V: .byte 0x66, 0x66, 0x66, 0x66, 0x66, 0x7E, 0x3C, 0x18
+letra_W: .byte 0x66, 0x7E, 0x7E, 0x66, 0x66, 0x66, 0x66, 0x42 
+letra_X: .byte 0x66, 0x66, 0x66, 0x3C, 0x3C, 0x66, 0x66, 0x66
+letra_Y: .byte 0x66, 0x66, 0x7E, 0x3C, 0x18, 0x18, 0x18, 0x18 
+letra_Z: .byte 0x7E, 0x7E, 0x30, 0x38, 0x1C, 0x0C, 0x7E, 0x7E
+
+alfabeto_sprites: .word letra_A, letra_B, letra_C, letra_D, letra_E, letra_F, letra_G, letra_H, letra_I, letra_J, letra_K, letra_L, letra_M, letra_N, letra_O, letra_P, letra_Q, letra_R, letra_S, letra_T, letra_U, letra_V, letra_W, letra_X, letra_Y, letra_Z
+
 # ----------------------------- INSTRUCOES -------------------------------
 
 # ------ Como declarar uma funcao ------
@@ -36,7 +75,6 @@ db_tentativa:		.asciiz "Tentativa: "
 
 # ------ Como chamar uma funcao -------
 # jal <nome da funcao>
-
 
 
 .text 
@@ -164,12 +202,8 @@ debug3:
 	la $a1, copia_palavra
 	jal ComparaCertas
 	
-	
-	la $a0, cores
-	jal CondicaoVitoria
-	beq $v0, 1, game_won
 
-# DEBUG - qual cores e copia p�s CERTAS
+# DEBUG - qual cores e copia pos CERTAS
 	beq $s6, 0, debug4
 	# linha das cores
 	la $a0, 0($v0)
@@ -195,14 +229,25 @@ debug4:
 	la $a1, copia_palavra
 	la $a2, cores
 	jal ComparaResto
-
-	# linha das cores
-	la $a0, 0($v0)
-	jal ImprimirPalavra
 	
-	li $v0, 4
-	la $a0, nova_linha
-	syscall
+	# imprimr comparacoes
+	la $a0, palavra_tentativa
+	la $a1, cores
+	move $a2, $s5
+	jal DesenhaBitmap
+	
+	
+	la $a0, cores
+	jal CondicaoVitoria
+	beq $v0, 1, game_won
+	
+	# linha das cores
+	#la $a0, 0($v0)
+	#jal ImprimirPalavra
+	
+	#li $v0, 4
+	#la $a0, nova_linha
+	#syscall
 	
 # DEBUG - qual cores e copia pos resto
 	beq $s6, 0, debug5
@@ -469,8 +514,8 @@ loop_ext:
 	lb $t4, ($t2)
 	beq $t4, 67, skip_int
 	
-	# n�o � 'C'
-	# pego a letra em palavra_tentativa e um aux para o come�o da palavra
+	# nao eh 'C'
+	# pego a letra em palavra_tentativa e um aux para o comeco da palavra
 	lb $t5, ($t0)
 	move $t6, $a1
 	li $t7, 0
@@ -541,3 +586,169 @@ nao_venceu:
 	jr $ra
 
 .end CondicaoVitoria
+
+# ----------------------------- PROCEDIMENTO draw a letter -------------------------------
+.globl DesenhaLetra
+.ent DesenhaLetra
+DesenhaLetra:
+	# $a0 bitMap
+	# $a1 letra
+	# $a2 cor
+	
+	li $t0, 0 # linhas
+	move $t1, $a0 
+
+loop_linhas_letra:
+	beq $t0, 8, fim_desenho_letra
+	
+	lb $t2, 0($a1)
+	li $t3, 0 # colunas
+	move $t4, $t1
+
+loop_colunas_letra:
+	beq $t3, 8, proxima_linha_letra
+	andi $t5, $t2, 1
+	
+	# se for 0 nao pinta
+	beq $t5, $zero, pula_pixel
+	
+	sw $a2, 0($t4)
+
+pula_pixel:
+	srl $t2, $t2, 1
+	addi $t4, $t4, 4   # proximo espaco no bitMap
+	addi $t3, $t3, 1   # incrementa colunas
+	j loop_colunas_letra
+
+proxima_linha_letra:
+	addi $a1, $a1, 1   # prox espaco no bitmap
+	addi $t1, $t1, 256 # desce a linha
+	addi $t0, $t0, 1   # incrementa linha
+	j loop_linhas_letra
+
+fim_desenho_letra:
+	jr $ra
+.end DesenhaLetra
+
+
+
+# ----------------------------- PROCEDIMENTO draw in bitmap -------------------------------
+.globl DesenhaBitmap
+.ent DesenhaBitmap
+DesenhaBitmap:
+	# co ter que chamar outro procedimento dentro, entao pilha
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $s0, 4($sp) # tentativa
+	sw $s1, 8($sp) # cores
+	sw $s2, 12($sp) # i do loop (0 a 4)
+	sw $s3, 16($sp) # espaco da letra atual
+	sw $s4, 20($sp) # tentativa atual
+	
+	move $s0, $a0
+	move $s1, $a1
+	li $s2, 0
+	move $s4, $a2
+	
+loop_renderiza:
+	beq $s2, 5, fim_renderiza
+	
+	# endereco com base na tentativa
+	# EIXO Y
+	mul $t0, $s4, 10 # 8 da letra + 2 da margem
+	addi $t0, $t0, 2 # margem do lado
+	mul $t0, $t0, 256
+	
+	# EIXO X
+	mul $t1, $s2, 10
+	addi $t1, $t1, 8
+	sll $t1, $t1, 2 # vezes 4 basicamente
+	
+	li $s3, 0x10040000
+	add $s3, $s3, $t0
+	add $s3, $s3, $t1
+	# $s3 ta no bit certo
+	
+	
+	# letra de cores
+	lb $t2, ($s1)
+	
+	
+	lw $a1, color_green # C
+	beq $t2, 67, pinta_fundo
+	
+	lw $a1, color_yellow # Q
+	beq $t2, 81, pinta_fundo
+	
+	lw $a1, color_red # E
+	
+	
+pinta_fundo:
+	move $a0, $s3
+	jal DesenhaFundoBloco
+	
+	lb $t3, 0($s0)     # letra de tentativa
+	subi $t3, $t3, 97  # -97 para pegar como indice de vetor
+	sll $t3, $t3, 2    
+	
+	la $t4, alfabeto_sprites
+	
+	# pega a sprite na matriz
+	add $t4, $t4, $t3  
+	lw $a1, 0($t4)
+	
+	
+	move $a0, $s3
+	lw $a2, color_gray
+	jal DesenhaLetra
+	
+	# proxima: letra_tentativa, resultado_comparacao e iteracao
+	addi $s0, $s0, 1
+	addi $s1, $s1, 1
+	addi $s2, $s2, 1
+	j loop_renderiza
+	
+fim_renderiza:
+	# pega a pilha de volta
+	lw $ra, 0($sp)
+	lw $s0, 4($sp)
+	lw $s1, 8($sp)
+	lw $s2, 12($sp)
+	lw $s3, 16($sp)
+	lw $s4, 20($sp)
+	addi $sp, $sp, 24
+	jr $ra			
+
+.end DesenhaBitmap
+
+# ----------------------------- PROCEDIMENTO draw background -------------------------------
+.globl DesenhaFundoBloco
+.ent DesenhaFundoBloco
+DesenhaFundoBloco:
+	
+	li $t0, 0 # para cada uma das linhas
+	move $t1, $a0 # $t1 e a tela
+	
+loop_fundo_linha:
+	beq $t0, 8, fim_fundo
+	
+	li $t2, 0 # para cada uma das colunas
+	move $t3, $t1
+	
+loop_fundo_coluna:
+	beq $t2, 8, prox_fundo_linha
+	
+	sw $a1, 0($t3) # pinta o pixel
+	
+	addi $t3, $t3, 4 # proximo pixel
+	addi $t2, $t2, 1
+	j loop_fundo_coluna
+	
+prox_fundo_linha:
+	addi $t1, $t1, 256
+	addi $t0, $t0, 1
+	j loop_fundo_linha
+	
+fim_fundo:
+	jr $ra
+.end DesenhaFundoBloco
