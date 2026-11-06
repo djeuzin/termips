@@ -2,9 +2,8 @@
 
 # ----------------------------- ERROS -------------------------------
 msg_erro_input:		.asciiz "Entrada invalida. Apenas palavras com 5 letras.\n"
-msg_erro_caractere:	.asciiz "Entrada invalida. Nï¿½o utilize caractere maiusculo ou especial.\n"
+msg_erro_caractere:	.asciiz "Entrada invalida. Não utilize caractere maiusculo ou especial.\n"
 msg_game_over:          .asciiz "Fim de jogo. A palavra era: "
-msg_vitoria: 		.asciiz "\nParabens! Voce acertou a palavra!\n"
 
 # ----------------------------- UTILS -------------------------------
 nova_linha: 		.asciiz "\n"
@@ -47,7 +46,7 @@ main:
 	# Flag para debug. 
 	# 0 - Falso. Modo normal
 	# 1 - Verdadeiro. Mostra opcoes.
-	li $s6, 0
+	li $s6, 1
 	li $s5, 0 # Tentativas
 	
 
@@ -163,13 +162,8 @@ debug3:
 	la $a0, palavra_tentativa
 	la $a1, copia_palavra
 	jal ComparaCertas
-	
-	
-	la $a0, cores
-	jal CondicaoVitoria
-	beq $v0, 1, game_won
 
-# DEBUG - qual cores e copia pï¿½s CERTAS
+# DEBUG - qual cores e copia pós CERTAS
 	beq $s6, 0, debug4
 	# linha das cores
 	la $a0, 0($v0)
@@ -196,16 +190,11 @@ debug4:
 	la $a2, cores
 	jal ComparaResto
 
+# DEBUG - qual cores e copia pós resto
+	beq $s6, 0, debug5
 	# linha das cores
 	la $a0, 0($v0)
 	jal ImprimirPalavra
-	
-	li $v0, 4
-	la $a0, nova_linha
-	syscall
-	
-# DEBUG - qual cores e copia pos resto
-	beq $s6, 0, debug5
 	
 	li $v0, 4
 	la $a0, novo_tab
@@ -221,18 +210,11 @@ debug4:
 	syscall
 # DEBUG - fim
 debug5:	
-
 	
 	# ############################# FIM ANALISAR PALAVRA ###############################
 	
 	addi $s5, $s5, 1
 	j game_loop
-	
-game_won:
-	li $v0, 4
-	la $a0, msg_vitoria
-	syscall
-	j exit
 
 game_over:
 	li $v0, 4
@@ -469,8 +451,8 @@ loop_ext:
 	lb $t4, ($t2)
 	beq $t4, 67, skip_int
 	
-	# nï¿½o ï¿½ 'C'
-	# pego a letra em palavra_tentativa e um aux para o comeï¿½o da palavra
+	# não é 'C'
+	# pego a letra em palavra_tentativa e um aux para o começo da palavra
 	lb $t5, ($t0)
 	move $t6, $a1
 	li $t7, 0
@@ -479,7 +461,7 @@ loop_ext:
 loop_int:
 	beq $t7, 5, nao_encontrou
 	
-	# t8 ï¿½ a letra da iteracao
+	# t8 é a letra da iteracao
 	lb $t8, ($t6)
 	beq $t5, $t8, encontrou
 	
@@ -514,30 +496,3 @@ fim_resto:
 	move $v0, $a2
 	jr $ra
 .end
-
-# ----------------------------- PROCEDIMENTO verify result equals "CCCCC" -------------------------------
-.globl CondicaoVitoria
-.ent CondicaoVitoria
-CondicaoVitoria:
-	move $t0, $a0
-	li $t1, 1
-	
-loop_vitoria:
-	beq $t1, 5, venceu
-	
-	lb $t2, ($t0)
-	bne $t2, 67, nao_venceu
-	
-	addi $t0, $t0, 1
-	addi $t1, $t1, 1
-	j loop_vitoria
-	
-venceu:
-	li $v0, 1
-	jr $ra
-
-nao_venceu:
-	li $v0, 0
-	jr $ra
-
-.end CondicaoVitoria
