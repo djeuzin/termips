@@ -14,6 +14,7 @@ buffer_banco:      	.space 7000
 buffer_input:		.space 100
 palavra_escolhida:	.space 6
 palavra_tentativa:	.space 6
+cores_vitoria:		.asciiz "CCCCC"
 
 copia_palavra:		.space 6
 cores:			.space 6
@@ -80,6 +81,8 @@ alfabeto_sprites: .word letra_A, letra_B, letra_C, letra_D, letra_E, letra_F, le
 .text 
 .globl main
 main:
+
+jal LimpaBitmap
 
 # ----------------------------- SETUP -------------------------------
 	# Flag para debug. 
@@ -277,6 +280,16 @@ game_won:
 	li $v0, 4
 	la $a0, msg_vitoria
 	syscall
+	
+		
+	li $a0, 0
+	jal LimpaBitmap
+	
+	la $a0, palavra_escolhida
+	la $a1, cores_vitoria
+	li $a2, 3
+	jal DesenhaBitmap
+	
 	j exit
 
 game_over:
@@ -291,7 +304,16 @@ game_over:
 	li $v0, 4
 	la $a0, nova_linha
 	syscall
-
+	
+	lw $a0, color_red
+	jal LimpaBitmap
+	
+	la $a0, palavra_escolhida
+	la $a1, cores_vitoria
+	li $a2, 3
+	jal DesenhaBitmap
+	
+	
 exit:	
 	li $v0, 10
 	syscall
@@ -752,3 +774,19 @@ prox_fundo_linha:
 fim_fundo:
 	jr $ra
 .end DesenhaFundoBloco
+
+# ----------------------------- LIMPANDO O BITMAP -------------------------------
+.globl LimpaBitmap
+.ent LimpaBitmap
+LimpaBitmap:
+	li $t0, 0x10040000 # bitmap
+	li $t1, 4096 # total no 512 x 512
+loop_limpa:
+	beq $t1, $zero, fim_limpa
+	sw $a0, 0($t0)
+	addi $t0, $t0, 4 # prox pixel
+	subi $t1, $t1, 1
+	j loop_limpa
+fim_limpa:
+	jr $ra
+.end LimpaBitmap
