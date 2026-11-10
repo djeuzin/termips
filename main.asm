@@ -82,7 +82,8 @@ alfabeto_sprites: .word letra_A, letra_B, letra_C, letra_D, letra_E, letra_F, le
 .globl main
 main:
 
-jal LimpaBitmap
+	li $a0, 0
+	jal LimpaBitmap
 
 # ----------------------------- SETUP -------------------------------
 	# Flag para debug. 
