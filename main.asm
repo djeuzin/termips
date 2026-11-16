@@ -81,8 +81,8 @@ alfabeto_sprites: .word letra_A, letra_B, letra_C, letra_D, letra_E, letra_F, le
 .text 
 .globl main
 main:
-
-jal LimpaBitmap
+	li $a0, 0
+	jal LimpaBitmap
 
 # ----------------------------- SETUP -------------------------------
 	# Flag para debug. 
@@ -196,7 +196,7 @@ debug3:
 
 	# ############################# ANALISAR PALAVRA ###############################	
 	
-	# cohpia da tentativa
+	# copia da escolhida
 	la $a0, palavra_escolhida
 	la $a1, copia_palavra
 	jal PalavraParaRotulo
