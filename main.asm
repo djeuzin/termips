@@ -81,7 +81,6 @@ alfabeto_sprites: .word letra_A, letra_B, letra_C, letra_D, letra_E, letra_F, le
 .text 
 .globl main
 main:
-
 	li $a0, 0
 	jal LimpaBitmap
 
@@ -197,14 +196,15 @@ debug3:
 
 	# ############################# ANALISAR PALAVRA ###############################	
 	
-	# cohpia da tentativa
+	# copia da escolhida
 	la $a0, palavra_escolhida
 	la $a1, copia_palavra
 	jal PalavraParaRotulo
 	
 	la $a0, palavra_tentativa
 	la $a1, copia_palavra
-	jal ComparaCertas
+	la $a2, cores
+	jal CompararPalavras2
 	
 
 # DEBUG - qual cores e copia pos CERTAS
@@ -228,12 +228,6 @@ debug3:
 # DEBUG - fim
 debug4:
 
-	# aqui eu tenho a string com as certas
-	la $a0, palavra_tentativa
-	la $a1, copia_palavra
-	la $a2, cores
-	jal ComparaResto
-	
 	# imprimr comparacoes
 	la $a0, palavra_tentativa
 	la $a1, cores
@@ -480,108 +474,87 @@ fim_conversion:
 
 # ----------------------------- PROCEDIMENTO compare the correct characters -------------------------------
 
-.globl ComparaCertas
-.ent ComparaCertas
-ComparaCertas:
-	move $t0, $a0
-	move $t1, $a1
+.globl CompararPalavras2
+.ent CompararPalavras2
+CompararPalavras2:
+	move $t0, $a0 # Palpite do usuário
+	move $t1, $a1 # Palavra alvo
 	la $t2, cores
-	
-loop_comparacao1:
+
+passada_1:
 	lb $t3, 0($t0)
 	lb $t4, 0($t1)
-	
-	beq $t3, $zero, fim_comparacao
-	
-	beq $t3, $t4, iguais
-	# se estiver errado, poe _
-	li $t5, 95
-	sb $t5, 0($t2)
-	
-continua:
-	
+
+	beq $t3, $zero, passada_1_fim
+
+	li $t6, 'E'
+	sb $t6, 0($t2)
+
+	bne $t3, $t4, passada_1_prox
+
+	li $t6, '*'
+	sb $t6, 0($t1)
+
+	li $t6, 'C'
+	sb $t6, 0($t2)
+
+passada_1_prox:
 	addi $t0, $t0, 1
 	addi $t1, $t1, 1
 	addi $t2, $t2, 1
-	j loop_comparacao1
-	
-iguais:
-	# C em cores
-	li $t5, 67
-	sb $t5, 0($t2)
-	
-	# poe * na tentativa
-	li $t5, 42
-	sb $t5, 0($t1)
-	
-	j continua
-	
-fim_comparacao:
-	sb $zero, 0($t2)
-	la $v0, cores
-	jr $ra
-.end ComparaCertas
 
-# ----------------------------- PROCEDIMENTO compare the rest of the attempt -------------------------------
-.globl ComparaResto
-.ent ComparaResto
-ComparaResto:
-	move $t0, $a0 #tentativa
-	move $t1, $a1 #copia
-	move $t2, $a2 #cores
-	li $t3, 0
+	j passada_1
+
+passada_1_fim:
+	sb $zero, 0($t2)
+
+	move $t0, $a0 # Palpite do usuário
+	move $t1, $a1 # Palavra alvo
+	la $t2, cores
+
+passada_2:
+	lb $t3, 0($t0)
+	lb $t4, 0($t1)
+	lb $t5, 0($t2)
+
+	beq $t3, $zero, passada_2_fim
+
+	beq $t5, 'C', passada_2_prox
+
+	li $t6, 0 # j
+
+passada_2_inner:
+	beq $t6, 5, passada_2_prox
+
+	add $t8, $a1, $t6
+	lb $t7, 0($t8) 		# alvo[j]
+
+	bne $t3, $t7, passada_2_inner_prox
+
+	li $t7, 'Q'
+	sb $t7, 0($t2)
 	
-loop_ext:
-	beq $t3, 5, fim_resto
+	li $t7, '*'
+	sb $t7, 0($t8)
 	
-	lb $t4, ($t2)
-	beq $t4, 67, skip_int
-	
-	# nao eh 'C'
-	# pego a letra em palavra_tentativa e um aux para o comeco da palavra
-	lb $t5, ($t0)
-	move $t6, $a1
-	li $t7, 0
-	
-	
-loop_int:
-	beq $t7, 5, nao_encontrou
-	
-	# t8 � a letra da iteracao
-	lb $t8, ($t6)
-	beq $t5, $t8, encontrou
-	
+	j passada_2_prox
+
+passada_2_inner_prox:
 	addi $t6, $t6, 1
-	addi $t7, $t7, 1
+	j passada_2_inner
 	
-	j loop_int
-	
-encontrou:
-	# poe o 'Q'
-	li $t9, 81
-	sb $t9, ($t2)
-	
-	# poe '*' na copia
-	li $t9, 42
-	sb $t9, ($t6)
-	j skip_int
-	
-nao_encontrou:
-	# poe 'E' na letra errada
-	li $t9, 69
-	sb $t9, ($t2)
-	
-	
-skip_int:
+passada_2_prox:
 	addi $t0, $t0, 1
+	addi $t1, $t1, 1
 	addi $t2, $t2, 1
-	addi $t3, $t3, 1
-	j loop_ext
-	
-fim_resto:
-	move $v0, $a2
+	j passada_2
+
+passada_2_fim:
+	la $v0, cores
+
 	jr $ra
-.end
+
+.end CompararPalavras2
 
 # ----------------------------- PROCEDIMENTO verify result equals "CCCCC" -------------------------------
 .globl CondicaoVitoria
