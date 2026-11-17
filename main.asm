@@ -73,16 +73,17 @@ letra_Z: .byte 0x7E, 0x7E, 0x30, 0x38, 0x1C, 0x0C, 0x7E, 0x7E
 # jal <nome da funcao>
 
 
-
 .text 
 .globl main
 main:
+	li $a0, 0
+	jal LimpaBitmap
 
 # ----------------------------- SETUP -------------------------------
 	# Flag para debug. 
 	# 0 - Falso. Modo normal
 	# 1 - Verdadeiro. Mostra opcoes.
-	li $s6, 1
+	li $s6, 0
 	li $s5, 0 # Tentativas
 	
 
@@ -100,7 +101,7 @@ gera_numero:
 
 
 
-	# DEBUG - qual numero foi escolhido
+# DEBUG - qual numero foi escolhido
 	beq $s6, 0, debug1
 	
 	la $a0, db_rng
@@ -114,9 +115,9 @@ gera_numero:
 	la $a0, nova_linha
 	li $v0, 4
 	syscall
-	# DEBUG - fim
-	
+# DEBUG - fim	
 debug1:
+
 # ----------------------------- PEGA PALAVRA SORTEADA -------------------------------
 
 	# $v0 LocalizaPalavra($a0 numero_aleatorio)
@@ -133,7 +134,7 @@ debug1:
 	
 # ----------------------------- IMPRESSAO -------------------------------
 
-	# DEBUG - qual palavra foi escolhida
+# DEBUG - qual palavra foi escolhida
 	beq $s6, 0, debug2
 	la $a0, db_palavra
     	li $v0, 4
@@ -146,7 +147,7 @@ debug1:
 	li $v0, 4
 	la $a0, nova_linha
 	syscall
-	# DEBUG - fim
+# DEBUG - fim
 debug2:
 
 # ----------------------------- DESENHAR LINHA -------------------------------
@@ -179,7 +180,7 @@ game_loop:
 	la $a1, palavra_tentativa
 	jal MostrarDisplay
 	
-	# DEBUG - qual palavra esta no input
+# DEBUG - qual palavra esta no input
 	beq $s6, 0, debug3
 	
 	move $a0, $s5
@@ -221,6 +222,22 @@ debug3:
 	
 	addi $s5, $s5, 1
 	j game_loop
+	
+game_won:
+	li $v0, 4
+	la $a0, msg_vitoria
+	syscall
+	
+		
+	li $a0, 0
+	jal LimpaBitmap
+	
+	la $a0, palavra_escolhida
+	la $a1, cores_vitoria
+	li $a2, 3
+	jal DesenhaBitmap
+	
+	j exit
 
 vitoria:
 	li $v0, 4
@@ -255,7 +272,16 @@ line_loop2:
 	li $v0, 4
 	la $a0, nova_linha
 	syscall
-
+	
+	lw $a0, color_red
+	jal LimpaBitmap
+	
+	la $a0, palavra_escolhida
+	la $a1, cores_vitoria
+	li $a2, 3
+	jal DesenhaBitmap
+	
+	
 exit:	
 	li $v0, 10
 	syscall
