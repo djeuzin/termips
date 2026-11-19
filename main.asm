@@ -63,6 +63,34 @@ letra_Z: .byte 0x7E, 0x7E, 0x30, 0x38, 0x1C, 0x0C, 0x7E, 0x7E
 
 alfabeto_sprites: .word letra_A, letra_B, letra_C, letra_D, letra_E, letra_F, letra_G, letra_H, letra_I, letra_J, letra_K, letra_L, letra_M, letra_N, letra_O, letra_P, letra_Q, letra_R, letra_S, letra_T, letra_U, letra_V, letra_W, letra_X, letra_Y, letra_Z
 
+
+digito_0: .byte 0x1C, 0x22, 0x32, 0x2A, 0x26, 0x22, 0x1C, 0x00
+digito_1: .byte 0x08, 0x0C, 0x08, 0x08, 0x08, 0x08, 0x1C, 0x00
+digito_2: .byte 0x1C, 0x22, 0x20, 0x10, 0x08, 0x04, 0x3E, 0x00
+digito_3: .byte 0x1E, 0x20, 0x20, 0x1C, 0x20, 0x20, 0x1E, 0x00
+digito_4: .byte 0x10, 0x18, 0x14, 0x12, 0x3E, 0x10, 0x10, 0x00
+digito_5: .byte 0x3E, 0x02, 0x1E, 0x20, 0x20, 0x22, 0x1C, 0x00
+digito_6: .byte 0x18, 0x04, 0x02, 0x1E, 0x22, 0x22, 0x1C, 0x00
+digito_7: .byte 0x3E, 0x20, 0x10, 0x08, 0x04, 0x04, 0x04, 0x00
+digito_8: .byte 0x1C, 0x22, 0x22, 0x1C, 0x22, 0x22, 0x1C, 0x00
+digito_9: .byte 0x1C, 0x22, 0x22, 0x3C, 0x20, 0x10, 0x0C, 0x00
+
+digitos_sprites: .word digito_0, digito_1, digito_2, digito_3, digito_4, digito_5, digito_6, digito_7, digito_8, digito_9
+
+
+
+# ----------------------------- RANK -------------------------------
+msg_pontuacao:		.asciiz "Pontuacao: "
+msg_rank_titulo:	.asciiz "\n===== RANK (TOP 5) =====\n"
+msg_rank_ponto:		.asciiz ". "
+msg_nome:		.asciiz "Novo rank! Digite seu nome (3 letras): "
+msg_erro_nome:		.asciiz "Nome invalido. Use exatamente 3 letras minusculas.\n"
+arquivo_rank:		.asciiz "rank.bin"
+comando_rank:		.asciiz "ranks"
+rank_scores:		.word 0, 0, 0, 0, 0
+rank_nomes:		.space 20
+buffer_nome:		.space 8
+
 # ----------------------------- INSTRUCOES -------------------------------
 
 # ------ Como declarar uma funcao ------
@@ -90,7 +118,8 @@ main:
 	# 1 - Verdadeiro. Mostra opcoes.
 	li $s6, 0
 	li $s5, 0 # Tentativas
-	
+	li $s4, 0 # pontuacao
+	jal CarregaRank
 
 # ----------------------------- NUMERO ALEATORIO -------------------------------
 gera_numero:
@@ -162,13 +191,18 @@ game_loop:
 	# $v0 LerEntrada();
 	jal LerEntrada
 	# le e valida se a entrada tem o tamanho correto
+
+	# comando "ranks": mostra o rank sem gastar tentativa
+	jal ComandoRank
+	beq $v0, 0, tentativa_normal
+	jal ImprimirRank
+	j game_loop
+tentativa_normal:
 	
 	# $a0 ja tem a tentativa
 	la $a0, buffer_input
 	la $a1, palavra_tentativa
 	jal PalavraParaRotulo
-	
-	
 	
 # DEBUG - qual palavra esta no input
 	beq $s6, 0, debug3
@@ -194,7 +228,7 @@ game_loop:
 	# DEBUG - fim
 debug3:
 
-	# ############################# ANALISAR PALAVRA ###############################	
+############################## ANALISAR PALAVRA ###############################	
 	
 	# copia da escolhida
 	la $a0, palavra_escolhida
@@ -275,16 +309,49 @@ game_won:
 	li $v0, 4
 	la $a0, msg_vitoria
 	syscall
-	
-		
+
+	# pontuacao = (6 - tentativas) * 100
+	li $t0, 6
+	sub $t0, $t0, $s5
+	mul $s4, $t0, 100
+
 	li $a0, 0
 	jal LimpaBitmap
-	
+
 	la $a0, palavra_escolhida
 	la $a1, cores_vitoria
 	li $a2, 3
 	jal DesenhaBitmap
+
+	# void DesenhaPontuacao($a0 pontuacao, $a1 cor);
+	move $a0, $s4
+	lw $a1, color_gray
+	jal DesenhaPontuacao
+
+	# console: pontuacao
+	li $v0, 4
+	la $a0, msg_pontuacao
+	syscall
+	li $v0, 1
+	move $a0, $s4
+	syscall
+	li $v0, 4
+	la $a0, nova_linha
+	syscall
+
+	# $v0 InsereRank(a0 pontuacao);
+	move $a0, $s4
+	jal InsereRank
+
+	# se entrou no top 5, pede o nome
+	beq $v0, 0, sem_nome
+	move $a0, $v0
+	jal LerNome
 	
+sem_nome:
+	jal SalvaRank
+	jal ImprimirRank
+
 	j exit
 
 game_over:
@@ -308,6 +375,12 @@ game_over:
 	li $a2, 3
 	jal DesenhaBitmap
 	
+	li $s4, 0
+	move $a0, $s4
+	lw $a1, color_gray
+	jal DesenhaPontuacao
+
+	jal ImprimirRank
 	
 exit:	
 	li $v0, 10
@@ -561,7 +634,7 @@ passada_2_fim:
 .ent CondicaoVitoria
 CondicaoVitoria:
 	move $t0, $a0
-	li $t1, 1
+	li $t1, 0
 	
 loop_vitoria:
 	beq $t1, 5, venceu
@@ -764,3 +837,336 @@ loop_limpa:
 fim_limpa:
 	jr $ra
 .end LimpaBitmap
+
+# ----------------------------- PROCEDIMENTO draw score -------------------------------
+.globl DesenhaPontuacao
+.ent DesenhaPontuacao
+DesenhaPontuacao:
+	# $a0 pontuacao (0 a 999)
+	# $a1 cor
+	# desenha 3 digitos na parte de baixo da tela
+	addi $sp, $sp, -24
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)  # i do loop (0 a 2)
+	sw $s1, 8($sp)  # resto da pontuacao
+	sw $s2, 12($sp) # cor
+	sw $s3, 16($sp) # espaco do digito atual
+	sw $s4, 20($sp) # divisor (100, 10, 1)
+
+	move $s1, $a0
+	move $s2, $a1
+	li $s0, 0
+	li $s4, 100
+
+loop_pontuacao:
+	beq $s0, 3, fim_pontuacao
+
+	# digito = resto / divisor ; resto = resto % divisor
+	div $s1, $s4
+	mflo $t0
+	mfhi $s1
+
+	# divisor = divisor / 10
+	li $t1, 10
+	div $s4, $t1
+	mflo $s4
+
+	# EIXO Y: linha 50
+	li $t2, 50
+	mul $t2, $t2, 256
+
+	# EIXO X: 18 + i*10
+	mul $t3, $s0, 10
+	addi $t3, $t3, 18
+	sll $t3, $t3, 2
+
+	li $s3, 0x10040000
+	add $s3, $s3, $t2
+	add $s3, $s3, $t3
+	# $s3 ta no pixel certo
+
+	# pega a sprite do digito
+	sll $t0, $t0, 2
+	la $t4, digitos_sprites
+	add $t4, $t4, $t0
+	lw $a1, 0($t4)
+
+	move $a0, $s3
+	move $a2, $s2
+	jal DesenhaLetra
+
+	addi $s0, $s0, 1
+	j loop_pontuacao
+
+fim_pontuacao:
+	lw $ra, 0($sp)
+	lw $s0, 4($sp)
+	lw $s1, 8($sp)
+	lw $s2, 12($sp)
+	lw $s3, 16($sp)
+	lw $s4, 20($sp)
+	addi $sp, $sp, 24
+	jr $ra
+
+.end DesenhaPontuacao
+
+# ----------------------------- PROCEDIMENTO insert in rank -------------------------------
+.globl InsereRank
+.ent InsereRank
+InsereRank:
+	# $a0 pontuacao
+	# $v0 posicao (1 a 5) ou 0 se nao entrou no top 5
+	la $t0, rank_scores
+	li $t1, 0 # i
+
+loop_insere:
+	beq $t1, 5, nao_entrou
+
+	sll $t2, $t1, 2
+	add $t2, $t0, $t2
+	lw $t3, 0($t2)
+
+	bgt $a0, $t3, achou_posicao
+
+	addi $t1, $t1, 1
+	j loop_insere
+
+achou_posicao:
+	# empurra os piores para baixo: rank[j] = rank[j-1], de j=4 ate j=i+1
+	li $t4, 4
+
+loop_desloca:
+	ble $t4, $t1, grava_posicao
+
+	sll $t5, $t4, 2
+	add $t5, $t0, $t5
+	lw $t6, -4($t5)
+	sw $t6, 0($t5)
+
+	# nome: rank_nomes fica 20 bytes depois de rank_scores
+	lw $t6, 16($t5)
+	sw $t6, 20($t5)
+
+	addi $t4, $t4, -1
+	j loop_desloca
+
+grava_posicao:
+	sw $a0, 0($t2)
+	addi $v0, $t1, 1
+	jr $ra
+
+nao_entrou:
+	li $v0, 0
+	jr $ra
+
+.end InsereRank
+
+# ----------------------------- PROCEDIMENTO print rank -------------------------------
+.globl ImprimirRank
+.ent ImprimirRank
+ImprimirRank:
+	li $v0, 4
+	la $a0, msg_rank_titulo
+	syscall
+
+	la $t0, rank_scores
+	li $t1, 1 # posicao
+
+loop_rank:
+	beq $t1, 6, fim_rank
+
+	li $v0, 1
+	move $a0, $t1
+	syscall
+
+	li $v0, 4
+	la $a0, msg_rank_ponto
+	syscall
+
+	# nome (20 bytes depois da pontuacao)
+	li $v0, 4
+	addi $a0, $t0, 20
+	syscall
+
+	li $v0, 4
+	la $a0, novo_tab
+	syscall
+
+	li $v0, 1
+	lw $a0, 0($t0)
+	syscall
+
+	li $v0, 4
+	la $a0, nova_linha
+	syscall
+
+	addi $t0, $t0, 4
+	addi $t1, $t1, 1
+	j loop_rank
+
+fim_rank:
+	jr $ra
+
+.end ImprimirRank
+
+# ----------------------------- PROCEDIMENTO command rank -------------------------------
+.globl ComandoRank
+.ent ComandoRank
+ComandoRank:
+	# $v0 1 se buffer_input == "ranks", senao 0
+	la $t0, buffer_input
+	la $t1, comando_rank
+	li $t4, 0
+
+loop_comando:
+	beq $t4, 5, eh_comando
+
+	lb $t2, 0($t0)
+	lb $t3, 0($t1)
+	bne $t2, $t3, nao_eh_comando
+
+	addi $t0, $t0, 1
+	addi $t1, $t1, 1
+	addi $t4, $t4, 1
+	j loop_comando
+
+eh_comando:
+	li $v0, 1
+	jr $ra
+
+nao_eh_comando:
+	li $v0, 0
+	jr $ra
+
+.end ComandoRank
+
+# ----------------------------- PROCEDIMENTO load rank from file -------------------------------
+.globl CarregaRank
+.ent CarregaRank
+CarregaRank:
+	# open file 13 (modo 0 = leitura)
+	li $v0, 13
+	la $a0, arquivo_rank
+	li $a1, 0
+	li $a2, 0
+	syscall
+
+	# se nao existe ainda, o rank fica zerado
+	bltz $v0, fim_carrega
+
+	move $t2, $v0
+
+	# read file 14 (5 words = 20 bytes)
+	li $v0, 14
+	move $a0, $t2
+	la $a1, rank_scores
+	li $a2, 40
+	syscall
+
+	# close file 16
+	li $v0, 16
+	move $a0, $t2
+	syscall
+
+fim_carrega:
+	jr $ra
+
+.end CarregaRank
+
+# ----------------------------- PROCEDIMENTO save rank to file -------------------------------
+.globl SalvaRank
+.ent SalvaRank
+SalvaRank:
+	# open file 13 (modo 1 = escrita)
+	li $v0, 13
+	la $a0, arquivo_rank
+	li $a1, 1
+	li $a2, 0
+	syscall
+
+	bltz $v0, fim_salva
+
+	move $t2, $v0
+
+	# write file 15
+	li $v0, 15
+	move $a0, $t2
+	la $a1, rank_scores
+	li $a2, 40
+	syscall
+
+	# close file 16
+	li $v0, 16
+	move $a0, $t2
+	syscall
+
+fim_salva:
+	jr $ra
+
+.end SalvaRank
+
+# ----------------------------- PROCEDIMENTO read name -------------------------------
+.globl LerNome
+.ent LerNome
+LerNome:
+	# $a0 posicao no rank (1 a 5)
+	# le 3 letras minusculas e grava em maiusculo em rank_nomes
+	addi $t0, $a0, -1
+	sll $t0, $t0, 2
+	la $t1, rank_nomes
+	add $t6, $t1, $t0 # $t6 = espaco do nome no rank
+
+pede_nome:
+	li $v0, 4
+	la $a0, msg_nome
+	syscall
+
+	# read string 8 (a1 = 4: le no maximo 3 letras)
+	li $v0, 8
+	la $a0, buffer_nome
+	li $a1, 4
+	syscall
+
+	li $t2, 0
+
+check_nome:
+	beq $t2, 3, grava_nome
+
+	la $t3, buffer_nome
+	add $t3, $t3, $t2
+	lb $t4, 0($t3)
+
+	blt $t4, 97, nome_invalido
+	bgt $t4, 122, nome_invalido
+
+	addi $t2, $t2, 1
+	j check_nome
+
+nome_invalido:
+	li $v0, 4
+	la $a0, msg_erro_nome
+	syscall
+	j pede_nome
+
+grava_nome:
+	li $t2, 0
+
+loop_grava_nome:
+	beq $t2, 3, fim_nome
+
+	la $t3, buffer_nome
+	add $t3, $t3, $t2
+	lb $t4, 0($t3)
+	subi $t4, $t4, 32 # minuscula -> maiuscula
+
+	add $t5, $t6, $t2
+	sb $t4, 0($t5)
+
+	addi $t2, $t2, 1
+	j loop_grava_nome
+
+fim_nome:
+	sb $zero, 3($t6)
+	jr $ra
+
+.end LerNome
